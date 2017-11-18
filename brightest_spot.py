@@ -22,45 +22,58 @@ def main () :
         while s:
                 image = cv2.flip(image, 1)
 
+                # gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                # blurred = cv2.GaussianBlur(gray, (11, 11), 0)
+
+                # # threshold the image to reveal light regions in the
+                # # blurred image
+                # thresh = cv2.threshold(blurred, 200, 255, cv2.THRESH_BINARY)[1]
+                # # perform a series of erosions and dilations to remove
+                # # any small blobs of noise from the thresholded image
+                # thresh = cv2.erode(thresh, None, iterations=2)
+                # thresh = cv2.dilate(thresh, None, iterations=4)
+
+                # # perform a connected component analysis on the thresholded
+                # # image, then initialize a mask to store only the "large"
+                # # components
+                # labels = measure.label(thresh, neighbors=8, background=0)
+                # mask = np.zeros(thresh.shape, dtype="uint8")
+                 
+                # # loop over the unique components
+                # for label in np.unique(labels):
+                #         # if this is the background label, ignore it
+                #         if label == 0:
+                #                 continue
+                 
+                #         # otherwise, construct the label mask and count the
+                #         # number of pixels 
+                #         labelMask = np.zeros(thresh.shape, dtype="uint8")
+                #         labelMask[labels == label] = 255
+                #         numPixels = cv2.countNonZero(labelMask)
+                 
+                #         # if the number of pixels in the component is sufficiently
+                #         # large, then add it to our mask of "large blobs"
+                #         if numPixels > 300:
+                #                 mask = cv2.add(mask, labelMask)
+                orig = image.copy()
                 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-                blurred = cv2.GaussianBlur(gray, (11, 11), 0)
+                gray = cv2.GaussianBlur(gray, (41, 41), 0)
+                image = orig.copy()
 
-                # threshold the image to reveal light regions in the
-                # blurred image
-                thresh = cv2.threshold(blurred, 200, 255, cv2.THRESH_BINARY)[1]
-                # perform a series of erosions and dilations to remove
-                # any small blobs of noise from the thresholded image
-                thresh = cv2.erode(thresh, None, iterations=2)
-                thresh = cv2.dilate(thresh, None, iterations=4)
+                mask = np.zeros(gray.shape[:2])
+                change = gray.copy()
+                for itter in range (500) :
+                        (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(change)
+                        cv2.circle(mask, maxLoc, 5, (255, 255, 255), -1)
+                        cv2.circle(change, maxLoc, 5, (0, 0, 0), -1)
+                        cv2.circle(image, maxLoc, 10, (255, 0, 0), 2)
 
-                # perform a connected component analysis on the thresholded
-                # image, then initialize a mask to store only the "large"
-                # components
-                labels = measure.label(thresh, neighbors=8, background=0)
-                mask = np.zeros(thresh.shape, dtype="uint8")
-                 
-                # loop over the unique components
-                for label in np.unique(labels):
-                        # if this is the background label, ignore it
-                        if label == 0:
-                                continue
-                 
-                        # otherwise, construct the label mask and count the
-                        # number of pixels 
-                        labelMask = np.zeros(thresh.shape, dtype="uint8")
-                        labelMask[labels == label] = 255
-                        numPixels = cv2.countNonZero(labelMask)
-                 
-                        # if the number of pixels in the component is sufficiently
-                        # large, then add it to our mask of "large blobs"
-                        if numPixels > 300:
-                                mask = cv2.add(mask, labelMask)
-        #         orig = image.copy()
-        #         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        #         gray = cv2.GaussianBlur(gray, (41, 41), 0)
-        #         (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(gray)
-        #         image = orig.copy()
-        #         cv2.circle(image, maxLoc, 41, (255, 0, 0), 2)
+
+                # image, center, radius, other things) 
+                # cv2.circle(image, maxLoc, 20, (255, 0, 0), 2)
+
+                # both = np.concatenate((mask, image))
+                # small = cv2.resize(both, (0,0), fx=0.5, fy=0.5) 
                 cv2.imshow( winName, mask)
                 
                 s, image = cam.read()

@@ -25,13 +25,15 @@ def main ():
                 
                 blur = cv2.GaussianBlur(hsv, (41, 41), 0)
                 
-                value_img = blur.copy()
-                sat_img = blur.copy()
+                # value_img = blur.copy()
+                # sat_img = blur.copy()
 
 
                 mask = np.zeros(hsv.shape[:2])
                 combine = np.add(hsv[:, :, 1], hsv[:,:,2])
-               
+                # np.set_printoptions(threshold=np.inf)
+                # print (combine)
+                # cv2.imwrite("image.png", img)               
                 for itter in range (100) :
                         (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(combine)
 
@@ -60,7 +62,7 @@ def main ():
                         cv2.destroyWindow("mask")
                         cv2.destroyWindow("image")
                         break
-        print ("Goodbye")
+        # print ("Goodbye")
 
 if __name__=="__main__" :
         main()
