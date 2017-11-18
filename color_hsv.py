@@ -30,7 +30,9 @@ def main ():
 
 
                 mask = np.zeros(hsv.shape[:2])
-                combine = np.add(hsv[:, :, 1], hsv[:,:,2])
+                half = np.full(hsv.shape[:2], 2)
+                combine = np.add(np.divide(blur[:, :, 1], half), np.divide(blur[:, :, 2], half))
+                # combine = np.add(blur[:, :, 1], blur[:,:,2])
                 # np.set_printoptions(threshold=np.inf)
                 # print (combine)
                 # cv2.imwrite("image.png", img)               

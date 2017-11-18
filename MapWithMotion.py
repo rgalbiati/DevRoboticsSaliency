@@ -31,7 +31,8 @@ def main() :
 
                 hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
                 blur = cv2.GaussianBlur(hsv, (41, 41), 0)
-                combine = np.add(blur[:, :, 1], blur[:,:,2])
+                half = np.full(hsv.shape[:2], 2)
+                combine = np.add(np.divide(blur[:, :, 1], half), np.divide(blur[:, :, 2], half))
 
                 orig = img.copy()
                 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
