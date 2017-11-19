@@ -5,6 +5,7 @@ import argparse
 import imutils
 import cv2
 import sys
+import heapq
 
 maskWin = "Mask"
 videoWin = "Video"
@@ -14,6 +15,7 @@ cam = cv2.VideoCapture(0)
 
 brightnessColor = (255, 0, 0)
 hsvColor = (0, 0, 255)
+whiteColor = (255, 255, 255)
 
 # ---------------------------- MOVEMENT FUNCTIONS ---------------------------- #
 # Purpose: creates and returns movement map where movement pixels are 
@@ -27,17 +29,38 @@ def diffImg (t0, t1, t2):
 # Purpose: finds the 100 brightest pixels and the 100 pixels with the highest 
 # combined saturation and value and returns the image with the pixels marked and 
 # a mask with the pixels marked
-def findIntensePixels(gray, combine, img, mask):
-        for itter in range (100) :
-                (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(gray)
-                cv2.circle(mask, maxLoc, 5, (0, 255, 0), -1)
-                cv2.circle(gray, maxLoc, 5, (0, 0, 0), -1)
-                cv2.circle(img, maxLoc, 10, brightnessColor, 2)
 
-                (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(combine)
-                cv2.circle(mask, maxLoc, 5, (255, 255, 255), -1)
-                cv2.circle(combine, maxLoc, 5, (0, 0, 0), -1)
-                cv2.circle(img, maxLoc, 10, hsvColor, 2)
+def findMaxVals (array, size) :
+        indices =  np.argpartition(array.flatten(), -1)[-100:]
+        max_vals = np.vstack(np.unravel_index(indices, array.shape)).T
+        return max_vals
+
+def graphMaxVals (img, mask, color, max_val_indices) :
+        for index in max_val_indices :
+                cv2.circle(img, (index[0], index[1]), 10, color, 2)
+                cv2.circle(mask, (index[0], index[1]), 5, whiteColor, -1)
+        return img, mask
+
+def findIntensePixels(gray, combine, img, mask):
+        size = img.shape[:2]
+        
+        max_indices = findMaxVals (gray, size)
+        img, mask = graphMaxVals(img, mask, brightnessColor, max_indices)
+
+        max_indices = findMaxVals (combine, size)
+        img, mask = graphMaxVals(img, mask, hsvColor, max_indices)
+
+
+        # for itter in range (100) :
+        #         (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(gray)
+        #         cv2.circle(mask, maxLoc, 5, (0, 255, 0), -1)
+        #         cv2.circle(gray, maxLoc, 5, (0, 0, 0), -1)
+        #         cv2.circle(img, maxLoc, 10, brightnessColor, 2)
+
+        #         (minVal, maxVal, minLoc, maxLoc) = cv2.minMaxLoc(combine)
+        #         cv2.circle(mask, maxLoc, 5, (255, 255, 255), -1)
+        #         cv2.circle(combine, maxLoc, 5, (0, 0, 0), -1)
+        #         cv2.circle(img, maxLoc, 10, hsvColor, 2)
         return img, mask
 
 # Purpose: returns an array with combined value and saturation values
