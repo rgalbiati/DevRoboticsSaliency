@@ -118,5 +118,7 @@ def processNextFrame() :
 def main() :
         processNextFrame()
 
+        sys.exit (0)
+
 if __name__=="__main__" :
         main()
