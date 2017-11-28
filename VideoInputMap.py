@@ -136,7 +136,7 @@ def showImages(img, mov_mask, sat_mask, bright_mask) :
         mask = cv2.flip(mask, 1)
         small_frame = cv2.resize(img, (0,0), fx=0.5, fy=0.5) 
         small_mask = cv2.resize(mask, (0,0), fx=0.5, fy=0.5) 
-        cv2.imshow(windowMask,small_mask)
+        cv2.imshow(windowMask,mask)
         cv2.imshow(windowVideo,small_frame)
 
 # Purpose: closes video windows
@@ -151,6 +151,7 @@ def surf (img) :
         surf = cv2.xfeatures2d.SURF_create(thresh)
 
         # Find keypoints and descriptors directly
+        surf.setUpright(True)
         kp, des = surf.detectAndCompute(img,None)
 
         if len(kp) > 50 :
@@ -159,6 +160,7 @@ def surf (img) :
                         surf.setHessianThreshold(thresh * 5)
 
                         kp, des = surf.detectAndCompute(img,None)
+
 
         img2 = cv2.drawKeypoints(img,kp,None,(255,0,0),4)
         return img2
