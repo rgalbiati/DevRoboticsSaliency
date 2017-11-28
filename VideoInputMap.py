@@ -33,7 +33,7 @@ def findMovement (t_minus, t, t_plus) :
         return movement_cont
 
 def contour (mask) :
-        ret, thresh = cv2.threshold(mask, 10, 255, 0) # play with threshold
+        ret, thresh = cv2.threshold(mask, 20, 255, 0) # play with threshold
 
         im, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
         return im
@@ -127,6 +127,9 @@ def showImages(img, mov_mask, sat_mask, bright_mask) :
 
         mask = np.asarray(sat_mask) | np.asarray(bright_mask) | np.asarray(mov_mask)
 
+        surf_mask = surf(mask)
+        mask = surf_mask # delete! 
+
         img = cv2.flip(img, 1)
         img = cv2.flip(img, 1)
         mask = cv2.flip(mask, 1)
@@ -144,9 +147,29 @@ def closeWebcam () :
 
 # ------------------------------ SURF FUNCTIONS ------------------------------ #
 def surf (img) :
-        surf = cv2.SURF(400)
+        thresh = 400
+        surf = cv2.xfeatures2d.SURF_create(thresh)
+
+        # Find keypoints and descriptors directly
         kp, des = surf.detectAndCompute(img,None)
-        print (len(kp))
+
+        if len(kp) > 50 :
+                while (len(kp) > 50) :
+                        thresh = thresh * 5
+                        surf.setHessianThreshold(thresh * 5)
+
+                        kp, des = surf.detectAndCompute(img,None)
+
+        img2 = cv2.drawKeypoints(img,kp,None,(255,0,0),4)
+        return img2
+        # surf.upright = True
+        # kp = surf.detect(img,None)
+        # img2 = cv2.xfeatures2d.drawKeypoints(img,kp,None,(255,0,0),4)
+
+
+
+
+
 
 
 # TODO USAGE INSTRUCTIONS / USAGE ERROR HANDLEING 
@@ -180,9 +203,7 @@ def main() :
                 sat_mask = cv2.cvtColor(sat_mask, cv2.COLOR_RGB2GRAY)
                 bright_mask = cv2.cvtColor(bright_mask, cv2.COLOR_RGB2GRAY)
 
-               
-                # surf(mask)
-
+        
                 showImages(frame, movement, sat_mask, bright_mask)
 
                 if cv2.waitKey(10) == 27 :
