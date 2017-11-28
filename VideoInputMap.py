@@ -2,10 +2,10 @@ import cv2
 import sys
 import numpy as np
 
-cap = cv2.VideoCapture('IMG_2156.MOV')
-windowName = "Video"
+cap = None
+windowVideo = "Video"
 windowMask = "Mask"
-cv2.namedWindow(windowName)
+cv2.namedWindow(windowVideo)
 cv2.namedWindow(windowMask)
 
 brightnessColor = (255, 0, 0)
@@ -27,36 +27,51 @@ def findMovement (t_minus, t, t_plus) :
         t_plus = cv2.cvtColor(t_plus, cv2.COLOR_RGB2GRAY)
 
         movementImage = diffImg(t_minus, t, t_plus)
-        mask = cv2.cvtColor(movementImage,cv2.COLOR_GRAY2BGR).copy()
-        return mask
+        movement_cont = contour(movementImage)
+
+        # REMOVE LATER mask = cv2.cvtColor(movementImage,cv2.COLOR_GRAY2BGR).copy()
+        return movement_cont
+
+def contour (mask) :
+        ret, thresh = cv2.threshold(mask, 10, 255, 0) # play with threshold
+
+        im, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        return im
 
 # ----------------------- HSV AND BRIGHTNESS FUNCTIONS ----------------------- #
 # Purpose: finds the 100 brightest pixels and the 100 pixels with the highest 
 #       combined saturation and value and returns the image with the pixels 
 #       marked and a mask with the pixels marked
 def findMaxVals (array, size) :
-        indices =  np.argpartition(array.flatten(), -1)[-100:]
+        indices =  np.argpartition(array.flatten(), -1)[-500:]
         max_vals = np.vstack(np.unravel_index(indices, array.shape)).T
         return max_vals
 
 # Purpose: circles indices in max_val_indices on mask and image
 def graphMaxVals (img, mask, color, max_val_indices) :
         for index in max_val_indices :
-                cv2.circle(img, (index[1], index[0]), 15, color, 2)
-                cv2.circle(mask, (index[1], index[0]), 5, whiteColor, -1)
+                # Vec3b & color2 = img.at<Vec3b>(index[1], index[0]);
+                # color2[2] = 13;
+                # Vec3b color2 = img.at<Vec3b>(Point(index[1], index[0]))
+                # img.at<Vec3b>(Point(index[1], index[0])) = color2
+                img[index[0], index[1]] = (255, 255, 255)
+                mask[index[0], index[1]] = (255, 255, 255)
+                # cv2.circle(img, (index[1], index[0]), 15, color, 2)
+                # cv2.circle(mask, (index[1], index[0]), 5, whiteColor, -1)
         return img, mask
 
 # Purpose: Finds brightest and most saturated pixels on image
-def findIntensePixels(gray, combine, img, mask):
-        size = img.shape[:2]
+def findIntensePixels(gray, combine, img, size):
+        sat_mask = np.zeros((size[0],size[1],3), np.uint8)
+        bright_mask = np.zeros((size[0],size[1],3), np.uint8)
 
         max_indices = findMaxVals (gray, size)
-        img, mask = graphMaxVals(img, mask, brightnessColor, max_indices)
+        img, bright_mask = graphMaxVals(img, bright_mask, brightnessColor, max_indices)
 
         max_indices = findMaxVals (combine, size)
-        img, mask = graphMaxVals(img, mask, hsvColor, max_indices)
+        img, sat_mask = graphMaxVals(img, sat_mask, hsvColor, max_indices)
 
-        return img, mask
+        return img, sat_mask, bright_mask
 
 # Purpose: returns an array with combined value and saturation values
 def getSaturationArray (img) :
@@ -73,6 +88,9 @@ def getGrayImg (img) :
         return gray
 
 # ----------------------------- Camera Functions ----------------------------- #
+def nothing(x):
+    pass
+
 # Purpose: sets initial images 
 def  Init ():
         global cap
@@ -86,37 +104,86 @@ def  Init ():
 def getImage (curr_frame, next_frame) :
         global cap
         ret, new_frame = cap.read()
-        return curr_frame, next_frame, new_frame
+        return curr_frame, next_frame, new_frame, ret
 
+def func (name, mask) :
+        cv2.createTrackbar(name, windowMask, 255, 255, nothing)
+
+        # get current positions of trackbars
+        importance = cv2.getTrackbarPos(name,windowMask)
+
+        if importance == 0 :
+                importance = 1
+
+        ret, mask = cv2.threshold(mask, 0, importance, cv2.THRESH_BINARY)
+        
+        return mask
+        
 # Purpose: shows mask and image in seperate windows
-def showImages(img, mask) :
+def showImages(img, mov_mask, sat_mask, bright_mask) :
+        mov_mask = func('Movement', mov_mask)
+        sat_mask = func('Saturation', sat_mask)
+        bright_mask = func('Brightness', bright_mask)
+
+        mask = np.asarray(sat_mask) | np.asarray(bright_mask) | np.asarray(mov_mask)
+
+        img = cv2.flip(img, 1)
+        img = cv2.flip(img, 1)
+        mask = cv2.flip(mask, 1)
+        mask = cv2.flip(mask, 1)
         small_frame = cv2.resize(img, (0,0), fx=0.5, fy=0.5) 
         small_mask = cv2.resize(mask, (0,0), fx=0.5, fy=0.5) 
         cv2.imshow(windowMask,small_mask)
-        cv2.imshow(windowName,small_frame)
+        cv2.imshow(windowVideo,small_frame)
 
 # Purpose: closes video windows
 def closeWebcam () :
         cv2.destroyWindow(windowMask)
-        cv2.destroyWindow(videoWin)
+        cv2.destroyWindow(windowVideo)
         print ("Goodbye")
 
+# ------------------------------ SURF FUNCTIONS ------------------------------ #
+def surf (img) :
+        surf = cv2.SURF(400)
+        kp, des = surf.detectAndCompute(img,None)
+        print (len(kp))
+
+
+# TODO USAGE INSTRUCTIONS / USAGE ERROR HANDLEING 
 # ------------------------------ MAIN FUNCTIONS ------------------------------ #
 def main() :
+        global cap
+        vidName = sys.argv[1]
+
+        cap = cv2.VideoCapture(vidName)
+
         frame_minus, frame, frame_plus = Init()
+        size = frame.shape[:2]
 
         while cap.isOpened():
-                frame_minus, frame, frame_plus = getImage(frame, frame_plus)
+                mask = np.zeros((size[0],size[1],3), np.uint8)
+                frame_minus, frame, frame_plus, ret = getImage(frame, frame_plus)
+                
+                if not ret :
+                        break
 
-                mask = findMovement(frame_minus.copy(), frame.copy(), 
+                movement = findMovement(frame_minus.copy(), frame.copy(), 
                                         frame_plus.copy())
+
 
                 combine = getSaturationArray(frame)
                 gray = getGrayImg(frame)
                 
-                frame, mask = findIntensePixels(gray, combine, frame, mask)
+                frame, sat_mask, bright_mask = findIntensePixels(gray, combine, frame, size)
 
-                showImages(frame, mask)
+     
+                sat_mask = cv2.cvtColor(sat_mask, cv2.COLOR_RGB2GRAY)
+                bright_mask = cv2.cvtColor(bright_mask, cv2.COLOR_RGB2GRAY)
+
+               
+                # surf(mask)
+
+                showImages(frame, movement, sat_mask, bright_mask)
 
                 if cv2.waitKey(10) == 27 :
                         break
