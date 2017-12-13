@@ -1,8 +1,5 @@
-from imutils import contours
-from skimage import measure
 import numpy as np
 import argparse
-import imutils
 import cv2
 import sys
 import heapq
@@ -12,7 +9,7 @@ maskWin = "Mask"
 videoWin = "Video"
 cv2.namedWindow(maskWin)
 cv2.namedWindow(videoWin)
-cam = cv2.VideoCapture(0)
+cam = cv2.VideoCapture(None)
 
 brightnessColor = (255, 0, 0)
 hsvColor = (0, 0, 255)
@@ -116,6 +113,14 @@ def processNextFrame() :
 
 # ------------------------------ MAIN FUNCTIONS ------------------------------ #
 def main() :
+        global cam
+        if len(sys.argv) > 1 :
+            vidName = sys.argv[1]
+        else :
+            vidName = 0
+
+        cam = cv2.VideoCapture(vidName)
+
         processNextFrame()
 
         sys.exit (0)

@@ -1,4 +1,5 @@
 Repository Overview : 
+----------------------
         MOST USEFUL FILES : 
         - VideoInputMap.py : finished bottom up saliency model with trackbars 
                 implemented.  NOTE: program opens saliency map in window on top 
@@ -7,19 +8,37 @@ Repository Overview :
         - videos : folder of test videos.  All videos also have human gaze 
                 data recorded 
 
-Purpose: Program reads from either computer's internal webcam or video input 
+
+Purpose: 
+--------
+      Program reads from either computer's internal webcam or video input 
         and creates saliency map for each frame based on pixel brightness, 
         pixel saturation, and movement. The program then uses surf featurs to 
         identify features on the map.  
 
-Dependencies : Python 3, Open CV
 
-Usage : Running the program with no additional command line arguments will 
-          launch using the computer's internal webcam.  Alternativly, a 
-          user can run the program with the path to a video as a command line 
-          argument 
+Dependencies : 
+--------------
+      Python 3, Open CV
+        - Link to download OpenCV, Python3 for macOS : 
+          https://www.learnopencv.com/install-opencv3-on-macos/
+      
+      * code was developed and run on macOS 10.12.6
+
+
+Usage : 
+-------
+      Running the program with no additional command line arguments will 
+        launch using the computer's internal webcam.  Alternativly, a 
+        user can run the program with the path to a video as a command line 
+        argument 
+        
+      example usage : 
+        ipython VideoInputMap.py videos/OneMovingObject_helico.avi
+
 
 Code Credits : 
+--------------
   - https://www.pyimagesearch.com/2014/09/29/finding-brightest-spot-image-
           using-python-opencv/
   - http://www.steinm.com/blog/motion-detection-webcam-python-opencv-
@@ -28,3 +47,6 @@ Code Credits :
           py_surf_intro/py_surf_intro.html
   - https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_gui/py_trackbar/
           py_trackbar.html
+
+  * Videos in video folder taken from :
+      Coutrot, Antoine, and Nathalie Guyader. "Toward the introduction of auditory information in dynamic visual attention models." Image Analysis for Multimedia Interactive Services (WIAMIS), 2013 14th International Workshop on. IEEE, 2013.
